@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
+
+<title>Orders</title>
+
+<style>
+
+body{
+font-family:Segoe UI;
+background:#f4f6f8;
+margin:0;
+padding:20px;
+}
+
+h2{
+text-align:center;
+margin-bottom:25px;
+}
+
+.order{
+background:white;
+padding:15px;
+margin-bottom:12px;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+cursor:pointer;
+}
+
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:white;
+padding:25px;
+border-radius:15px;
+width:90%;
+max-width:420px;
+max-height:90vh;
+overflow:auto;
+}
+
+.close{
+background:red;
+color:white;
+border:none;
+padding:8px 14px;
+border-radius:8px;
+margin-bottom:10px;
+cursor:pointer;
+}
+
+select{
+width:100%;
+padding:10px;
+margin-top:10px;
+}
+
+.item{
+background:#f1f1f1;
+padding:8px;
+border-radius:8px;
+margin:5px 0;
+}
+
+.save{
+background:#0f9d58;
+color:white;
+border:none;
+padding:10px;
+border-radius:10px;
+width:100%;
+margin-top:10px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Orders</h2>
+
+<div id="orders"></div>
+
+<div class="popup" id="popup">
+
+<div class="popup-box">
+
+<button class="close" onclick="closePopup()">Close</button>
+
+<div id="details"></div>
+
+</div>
+
+</div>
+
+<script>
+
+const db = firebase.firestore()
+
+let currentOrder=""
+
+/* LOAD ORDERS */
+
+db.collection("orders").onSnapshot(snapshot=>{
+
+let html=""
+
+if(snapshot.empty){
+html="<h3>No Orders Yet</h3>"
+}
+
+snapshot.forEach(doc=>{
+
+let o=doc.data()
+
+let name="Customer"
+
+if(o.customer && o.customer.name){
+name=o.customer.name
+}
+
+let total=o.total || 0
+let status=o.status || "Pending"
+
+html+=`
+
+<div class="order" onclick="showOrder('${doc.id}')">
+
+<b>${name}</b><br>
+
+Total: ₹${total}<br>
+
+Status: ${status}
+
+</div>
+
+`
+
+})
+
+document.getElementById("orders").innerHTML=html
+
+})
+
+
+
+/* SHOW ORDER DETAILS */
+
+function showOrder(id){
+
+currentOrder=id
+
+db.collection("orders").doc(id).get().then(doc=>{
+
+let o=doc.data()
+
+let c=o.customer || {}
+
+let itemsHTML=""
+
+if(o.items){
+
+o.items.forEach(i=>{
+
+itemsHTML+=`
+
+<div class="item">
+
+${i.name} x${i.qty}
+
+</div>
+
+`
+
+})
+
+}
+
+document.getElementById("details").innerHTML=`
+
+<h3>Customer Details</h3>
+
+<b>Name:</b> ${c.name || "-"}<br>
+<b>Phone:</b> ${c.phone || "-"}<br>
+<b>Email:</b> ${o.userEmail || "-"}<br>
+<b>Address:</b> ${c.address || "-"}
+
+<br><br>
+
+<h3>Items</h3>
+
+${itemsHTML}
+
+<br>
+
+<b>Total:</b> ₹${o.total || 0}
+
+<br><br>
+
+<b>Payment:</b> ${o.payment || "-"}
+
+<br><br>
+
+<h3>Delivery Time</h3>
+
+<select id="deliveryHour">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+<option>7</option>
+<option>8</option>
+<option>9</option>
+<option>10</option>
+<option>11</option>
+<option>12</option>
+</select>
+
+<select id="deliveryMinute">
+<option>00</option>
+<option>15</option>
+<option>30</option>
+<option>45</option>
+</select>
+
+<select id="deliveryAMPM">
+<option>AM</option>
+<option>PM</option>
+</select>
+
+<h3>Update Status</h3>
+
+<select id="statusSelect">
+
+<option>Pending</option>
+<option>Packed</option>
+<option>Out for Delivery</option>
+<option>Delivered</option>
+<option>Cancelled</option>
+
+</select>
+
+<button class="save" onclick="saveOrder()">Save Update</button>
+
+`
+
+})
+
+document.getElementById("popup").style.display="flex"
+
+}
+
+
+
+function closePopup(){
+
+document.getElementById("popup").style.display="none"
+
+}
+
+
+
+/* SAVE ORDER UPDATE */
+
+function saveOrder(){
+
+let hour=document.getElementById("deliveryHour").value
+let min=document.getElementById("deliveryMinute").value
+let ampm=document.getElementById("deliveryAMPM").value
+
+let deliveryTime = hour + ":" + min + " " + ampm
+
+let status=document.getElementById("statusSelect").value
+
+db.collection("orders").doc(currentOrder).update({
+
+status:status,
+deliveryTime:deliveryTime
+
+})
+
+closePopup()
+
+}
+
+</script>
+
+</body>
+</html>

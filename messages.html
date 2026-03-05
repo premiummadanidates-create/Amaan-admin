@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="../firebase.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+padding:20px;
+}
+
+.msg{
+background:white;
+padding:15px;
+margin:10px 0;
+border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Messages</h2>
+
+<div id="msgs"></div>
+
+<script>
+
+const db=firebase.firestore()
+
+db.collection("messages").onSnapshot(snapshot=>{
+
+let html=""
+
+snapshot.forEach(doc=>{
+
+let m=doc.data()
+
+html+=`
+
+<div class="msg">
+
+<b>${m.name}</b>
+
+<br>
+
+${m.message}
+
+</div>
+
+`
+
+})
+
+document.getElementById("msgs").innerHTML=html
+
+})
+
+</script>
+
+</body>
+</html>

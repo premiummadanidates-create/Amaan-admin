@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Add Product</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="../firebase.js"></script>
+
+<style>
+body{
+font-family:Segoe UI;
+background:#f4f6f8;
+padding:20px
+}
+
+.box{
+background:white;
+padding:20px;
+border-radius:15px
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+border:1px solid #ccc
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:black;
+color:white;
+border:none;
+border-radius:10px
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h3>Add Product</h3>
+
+<input id="name" placeholder="Product name">
+<input id="price" placeholder="Price">
+<input id="old" placeholder="Old price">
+<input id="image" placeholder="Image URL">
+
+<button onclick="add()">Add Product</button>
+
+</div>
+
+<script>
+
+const db=firebase.firestore()
+
+function add(){
+
+let name=document.getElementById("name").value
+let price=parseInt(document.getElementById("price").value)
+let old=parseInt(document.getElementById("old").value)
+let image=document.getElementById("image").value
+
+db.collection("products").add({
+
+name,
+price,
+old,
+image,
+stock:true
+
+})
+
+alert("Product Added")
+
+}
+
+</script>
+
+</body>
+</html>

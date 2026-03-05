@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Madani Dates Admin</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f8;
+}
+
+header{
+background:black;
+color:white;
+padding:18px;
+text-align:center;
+font-size:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:20px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:30px;
+border-radius:15px;
+text-align:center;
+box-shadow:0 6px 20px rgba(0,0,0,0.1);
+cursor:pointer;
+}
+
+.card:hover{
+transform:scale(1.05);
+}
+
+</style>
+</head>
+
+<body>
+
+<header>Madani Dates Admin</header>
+
+<div class="grid">
+
+<div class="card" onclick="location.href='orders.html'">
+📦 Orders
+</div>
+
+<div class="card" onclick="location.href='stock.html'">
+📊 Stock
+</div>
+
+<div class="card" onclick="location.href='add-item.html'">
+➕ Add Product
+</div>
+
+<div class="card" onclick="location.href='messages.html'">
+💬 Messages
+</div>
+
+</div>
+
+</body>
+</html>
