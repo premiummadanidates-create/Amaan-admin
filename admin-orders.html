@@ -2,113 +2,84 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<title>My Orders</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script src="firebase.js"></script>
-
-<title>Admin Orders</title>
 
 <style>
 
 body{
+margin:0;
 font-family:Segoe UI;
 background:#f4f6f8;
-margin:0;
-padding:20px;
 }
 
-h2{
-text-align:center;
-margin-bottom:25px;
+header{
+background:#0f9d58;
+color:white;
+padding:20px;
+display:flex;
+align-items:center;
+}
+
+.back{
+margin-right:15px;
+cursor:pointer;
+font-size:18px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+padding:25px;
 }
 
 .order{
 background:white;
-padding:15px;
-margin-bottom:12px;
-border-radius:12px;
-box-shadow:0 4px 12px rgba(0,0,0,0.08);
-cursor:pointer;
+padding:20px;
+border-radius:20px;
+margin-bottom:20px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
 
-.popup{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-display:none;
-justify-content:center;
-align-items:center;
-}
-
-.popup-box{
-background:white;
-padding:25px;
-border-radius:15px;
-width:90%;
-max-width:420px;
-max-height:90vh;
-overflow:auto;
-}
-
-.close{
-background:red;
-color:white;
-border:none;
-padding:8px 14px;
-border-radius:8px;
-margin-bottom:10px;
-cursor:pointer;
-}
-
-select,input{
-width:100%;
-padding:10px;
-margin-top:10px;
-}
-
-.item{
-background:#f1f1f1;
-padding:8px;
-border-radius:8px;
-margin:5px 0;
-}
-
-.save{
-background:#0f9d58;
-color:white;
-border:none;
-padding:12px;
-border-radius:10px;
-width:100%;
-margin-top:15px;
-cursor:pointer;
+.time{
+color:#0f9d58;
+font-weight:bold;
+margin-top:5px;
 }
 
 .otp{
-background:#2196f3;
-color:white;
-border:none;
+margin-top:10px;
+background:#fff3cd;
 padding:10px;
 border-radius:8px;
-margin-top:10px;
-width:100%;
+font-weight:bold;
 }
 
-.verify{
-background:#4caf50;
-color:white;
-border:none;
-padding:10px;
-border-radius:8px;
-margin-top:10px;
-width:100%;
+.track{
+height:8px;
+background:#ddd;
+border-radius:10px;
+margin-top:15px;
+position:relative;
+}
+
+.progress{
+height:100%;
+background:#0f9d58;
+border-radius:10px;
+}
+
+.truck{
+position:absolute;
+top:-18px;
+font-size:24px;
 }
 
 </style>
@@ -117,40 +88,33 @@ width:100%;
 
 <body>
 
-<h2>Admin Orders</h2>
+<header>
 
-<div id="orders"></div>
-
-<div class="popup" id="popup">
-
-<div class="popup-box">
-
-<button class="close" onclick="closePopup()">Close</button>
-
-<div id="details"></div>
-
+<div class="back" onclick="window.location='home.html'">
+⬅ Back
 </div>
 
-</div>
+<div>My Orders</div>
 
-<div id="recaptcha-container"></div>
+</header>
+
+<div class="container" id="orders"></div>
 
 <script>
 
-const db=firebase.firestore()
-const auth=firebase.auth()
+const auth = firebase.auth()
+const db = firebase.firestore()
 
-let currentOrder=""
-let confirmationResult
+auth.onAuthStateChanged(user=>{
 
-window.recaptchaVerifier=new firebase.auth.RecaptchaVerifier(
-"recaptcha-container",
-{size:"invisible"}
-)
+if(!user){
+window.location="index.html"
+return
+}
 
-/* LOAD ORDERS */
-
-db.collection("orders").orderBy("created","desc").onSnapshot(snapshot=>{
+db.collection("orders")
+.where("userEmail","==",user.email.toLowerCase())
+.onSnapshot(snapshot=>{
 
 let html=""
 
@@ -158,17 +122,53 @@ snapshot.forEach(doc=>{
 
 let o=doc.data()
 
-let name=o.customer?.name || "Customer"
+let percent=10
+
+if(o.status=="Packed") percent=40
+if(o.status=="Out for Delivery") percent=75
+if(o.status=="Delivered") percent=100
+
+let otpHTML=""
+
+if(o.status=="Out for Delivery" && o.deliveryOTP){
+
+otpHTML=`
+<div class="otp">
+Delivery OTP: ${o.deliveryOTP}
+<br>
+Show this OTP to delivery boy
+</div>
+`
+
+}
 
 html+=`
 
-<div class="order" onclick="showOrder('${doc.id}')">
+<div class="order">
 
-<b>${name}</b><br>
+<b>Status:</b> ${o.status}
 
-Total: ₹${o.total || 0}<br>
+<br>
 
-Status: ${o.status || "Pending"}
+<b>Total:</b> ₹${o.total}
+
+<div class="time">
+
+Estimated Delivery: ${o.deliveryTime || "Not set"}
+
+</div>
+
+${otpHTML}
+
+<div class="track">
+
+<div class="progress" style="width:${percent}%"></div>
+
+<div class="truck" style="left:${percent}%">
+🚚
+</div>
+
+</div>
 
 </div>
 
@@ -180,174 +180,7 @@ document.getElementById("orders").innerHTML=html
 
 })
 
-
-
-/* SHOW ORDER */
-
-function showOrder(id){
-
-currentOrder=id
-
-db.collection("orders").doc(id).get().then(doc=>{
-
-let o=doc.data()
-
-let c=o.customer || {}
-
-let itemsHTML=""
-
-if(o.items){
-
-o.items.forEach(i=>{
-
-itemsHTML+=`
-
-<div class="item">
-
-${i.name} x${i.qty}
-
-</div>
-
-`
-
 })
-
-}
-
-document.getElementById("details").innerHTML=`
-
-<h3>Customer Details</h3>
-
-<b>Name:</b> ${c.name || "-"}<br>
-<b>Phone:</b> ${c.phone || "-"}<br>
-<b>Address:</b> ${c.address || "-"}
-
-<br><br>
-
-<h3>Items</h3>
-
-${itemsHTML}
-
-<br>
-
-<b>Total:</b> ₹${o.total || 0}
-
-<br><br>
-
-<h3>Status</h3>
-
-<select id="statusSelect">
-
-<option>Pending</option>
-<option>Packed</option>
-<option>Out for Delivery</option>
-
-</select>
-
-<h3>Delivery OTP</h3>
-
-<input id="customerPhone" value="${c.phone || ""}">
-
-<button class="otp" onclick="sendOTP()">
-Send OTP
-</button>
-
-<input id="otp" placeholder="Enter OTP">
-
-<button class="verify" onclick="verifyOTP()">
-Verify OTP
-</button>
-
-<button class="save" onclick="saveStatus()">
-Save Status
-</button>
-
-`
-
-})
-
-document.getElementById("popup").style.display="flex"
-
-}
-
-
-
-function closePopup(){
-
-document.getElementById("popup").style.display="none"
-
-}
-
-
-
-/* SAVE STATUS */
-
-function saveStatus(){
-
-let status=document.getElementById("statusSelect").value
-
-db.collection("orders").doc(currentOrder).update({
-
-status:status
-
-})
-
-alert("Status Updated")
-
-}
-
-
-
-/* SEND OTP */
-
-function sendOTP(){
-
-let phone=document.getElementById("customerPhone").value
-
-firebase.auth().signInWithPhoneNumber(
-phone,
-window.recaptchaVerifier
-).then(function(result){
-
-confirmationResult=result
-
-alert("OTP Sent")
-
-}).catch(function(error){
-
-alert(error.message)
-
-})
-
-}
-
-
-
-/* VERIFY OTP */
-
-function verifyOTP(){
-
-let code=document.getElementById("otp").value
-
-confirmationResult.confirm(code)
-.then(function(result){
-
-alert("OTP Verified")
-
-db.collection("orders").doc(currentOrder).update({
-
-status:"Delivered"
-
-})
-
-})
-.catch(function(error){
-
-alert("Wrong OTP")
-
-})
-
-}
 
 </script>
 
