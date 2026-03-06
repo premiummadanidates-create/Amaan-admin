@@ -6,6 +6,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <script src="firebase.js"></script>
 
 <title>Orders</title>
@@ -82,11 +83,12 @@ margin:5px 0;
 background:#0f9d58;
 color:white;
 border:none;
-padding:10px;
+padding:12px;
 border-radius:10px;
 width:100%;
-margin-top:10px;
+margin-top:15px;
 cursor:pointer;
+font-size:16px;
 }
 
 </style>
@@ -117,7 +119,9 @@ const db = firebase.firestore()
 
 let currentOrder=""
 
-db.collection("orders").onSnapshot(snapshot=>{
+/* LOAD ORDERS */
+
+db.collection("orders").orderBy("created","desc").onSnapshot(snapshot=>{
 
 let html=""
 
@@ -133,9 +137,9 @@ html+=`
 
 <b>${name}</b><br>
 
-Total: ₹${o.total}<br>
+Total: ₹${o.total || 0}<br>
 
-Status: ${o.status}
+Status: ${o.status || "Pending"}
 
 </div>
 
@@ -146,6 +150,10 @@ Status: ${o.status}
 document.getElementById("orders").innerHTML=html
 
 })
+
+
+
+/* SHOW ORDER DETAILS */
 
 function showOrder(id){
 
@@ -159,23 +167,44 @@ let c=o.customer || {}
 
 let itemsHTML=""
 
+if(o.items){
+
 o.items.forEach(i=>{
-itemsHTML+=`<div class="item">${i.name} x${i.qty}</div>`
+
+itemsHTML+=`
+
+<div class="item">
+
+${i.name} x${i.qty}
+
+</div>
+
+`
+
 })
+
+}
 
 document.getElementById("details").innerHTML=`
 
-<h3>Customer</h3>
+<h3>Customer Details</h3>
 
-${c.name}<br>
-${c.phone}<br>
-${c.address}
+<b>Name:</b> ${c.name || "-"}<br>
+<b>Phone number:</b> ${c.phone || "-"}<br>
+<b>Address:</b> ${c.address || "-"}<br>
+<b>Email:</b> ${o.userEmail || "-"}
+
+<br><br>
 
 <h3>Items</h3>
 
 ${itemsHTML}
 
-<b>Total:</b> ₹${o.total}
+<br>
+
+<b>Total:</b> ₹${o.total || 0}
+
+<br><br>
 
 <h3>Delivery Date</h3>
 
@@ -207,9 +236,17 @@ document.getElementById("popup").style.display="flex"
 
 }
 
+
+
 function closePopup(){
+
 document.getElementById("popup").style.display="none"
+
 }
+
+
+
+/* SAVE ORDER UPDATE */
 
 function saveOrder(){
 
@@ -217,20 +254,32 @@ let date=document.getElementById("deliveryDate").value
 let time=document.getElementById("deliveryTime").value
 let status=document.getElementById("statusSelect").value
 
-let delivery=""
+let deliveryTime=""
 
-if(status==="Out for Delivery"){
-delivery=date+" "+time
+if(date && time){
+
+deliveryTime=date+" "+time
+
 }
 
 db.collection("orders").doc(currentOrder).update({
 
 status:status,
-deliveryTime:delivery
+deliveryTime:deliveryTime
 
 })
+.then(()=>{
+
+alert("Order Updated")
 
 closePopup()
+
+})
+.catch(err=>{
+
+alert("Error updating order")
+
+})
 
 }
 
