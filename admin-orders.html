@@ -22,7 +22,6 @@ padding:20px;
 
 h2{
 text-align:center;
-margin-bottom:25px;
 }
 
 .order{
@@ -52,46 +51,41 @@ padding:25px;
 border-radius:15px;
 width:90%;
 max-width:420px;
-max-height:90vh;
-overflow:auto;
 }
 
-.close{
-background:red;
-color:white;
-border:none;
-padding:8px 14px;
-border-radius:8px;
-margin-bottom:10px;
-cursor:pointer;
-}
-
-select,input{
+input,select{
 width:100%;
 padding:10px;
 margin-top:10px;
 }
 
-.item{
-background:#f1f1f1;
-padding:8px;
+button{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:none;
 border-radius:8px;
-margin:5px 0;
+cursor:pointer;
+color:white;
 }
 
-.btn{
+.generate{
 background:#0f9d58;
-color:white;
-border:none;
-padding:10px;
-border-radius:10px;
-width:100%;
-margin-top:10px;
-cursor:pointer;
 }
 
 .verify{
 background:#2196f3;
+}
+
+.close{
+background:red;
+}
+
+.item{
+background:#f1f1f1;
+padding:6px;
+border-radius:6px;
+margin:4px 0;
 }
 
 </style>
@@ -121,7 +115,6 @@ background:#2196f3;
 const db = firebase.firestore()
 
 let currentOrder=""
-let generatedOTP=""
 
 /* LOAD ORDERS */
 
@@ -134,8 +127,6 @@ snapshot.forEach(doc=>{
 let o=doc.data()
 
 let name=o.customer?.name || "Customer"
-let total=o.total || 0
-let status=o.status || "Pending"
 
 html+=`
 
@@ -143,9 +134,9 @@ html+=`
 
 <b>${name}</b><br>
 
-Total: ₹${total}<br>
+Total: ₹${o.total}<br>
 
-Status: ${status}
+Status: ${o.status}
 
 </div>
 
@@ -166,35 +157,30 @@ currentOrder=id
 db.collection("orders").doc(id).get().then(doc=>{
 
 let o=doc.data()
+
 let c=o.customer || {}
 
-let itemsHTML=""
+let items=""
 
-if(o.items){
 o.items.forEach(i=>{
-itemsHTML+=`<div class="item">${i.name} x${i.qty}</div>`
+
+items+=`<div class="item">${i.name} x${i.qty}</div>`
+
 })
-}
 
 document.getElementById("details").innerHTML=`
 
 <h3>Customer</h3>
 
-Name: ${c.name || "-"}<br>
-Phone: ${c.phone || "-"}<br>
-Address: ${c.address || "-"}
-
-<br><br>
+Name: ${c.name}<br>
+Phone: ${c.phone}<br>
+Address: ${c.address}
 
 <h3>Items</h3>
 
-${itemsHTML}
+${items}
 
-<br>
-
-<b>Total:</b> ₹${o.total || 0}
-
-<br><br>
+<b>Total:</b> ₹${o.total}
 
 <h3>Status</h3>
 
@@ -208,15 +194,19 @@ ${itemsHTML}
 
 </select>
 
-<br><br>
+<button class="generate" onclick="generateOTP()">
 
-<h3>Delivery OTP</h3>
+Generate Delivery OTP
 
-<input id="otpInput" placeholder="Enter OTP">
+</button>
 
-<button class="btn" onclick="generateOTP()">Generate OTP</button>
+<input id="otpVerify" placeholder="Enter OTP">
 
-<button class="btn verify" onclick="verifyOTP()">Verify OTP</button>
+<button class="verify" onclick="verifyOTP()">
+
+Verify OTP
+
+</button>
 
 `
 
@@ -226,25 +216,26 @@ document.getElementById("popup").style.display="flex"
 
 }
 
-/* CLOSE */
-
 function closePopup(){
+
 document.getElementById("popup").style.display="none"
+
 }
 
 /* GENERATE OTP */
 
 function generateOTP(){
 
-generatedOTP=Math.floor(1000+Math.random()*9000)
+let otp=Math.floor(1000+Math.random()*9000)
 
 db.collection("orders").doc(currentOrder).update({
 
-deliveryOTP:generatedOTP
+deliveryOTP:otp,
+status:"Out for Delivery"
 
 })
 
-alert("OTP Generated: "+generatedOTP)
+alert("OTP Generated and saved")
 
 }
 
@@ -252,7 +243,7 @@ alert("OTP Generated: "+generatedOTP)
 
 function verifyOTP(){
 
-let entered=document.getElementById("otpInput").value
+let entered=document.getElementById("otpVerify").value
 
 db.collection("orders").doc(currentOrder).get().then(doc=>{
 
