@@ -91,6 +91,28 @@ cursor:pointer;
 font-size:16px;
 }
 
+.generate{
+background:#2196f3;
+color:white;
+border:none;
+padding:12px;
+border-radius:10px;
+width:100%;
+margin-top:10px;
+cursor:pointer;
+}
+
+.verify{
+background:#673ab7;
+color:white;
+border:none;
+padding:12px;
+border-radius:10px;
+width:100%;
+margin-top:10px;
+cursor:pointer;
+}
+
 </style>
 
 </head>
@@ -226,6 +248,20 @@ ${itemsHTML}
 
 </select>
 
+<button class="generate" onclick="generateOTP()">
+
+Generate Delivery OTP
+
+</button>
+
+<input id="otpVerify" placeholder="Enter OTP">
+
+<button class="verify" onclick="verifyOTP()">
+
+Verify OTP
+
+</button>
+
 <button class="save" onclick="saveOrder()">Save</button>
 
 `
@@ -241,6 +277,57 @@ document.getElementById("popup").style.display="flex"
 function closePopup(){
 
 document.getElementById("popup").style.display="none"
+
+}
+
+
+
+/* GENERATE OTP */
+
+function generateOTP(){
+
+let otp=Math.floor(1000+Math.random()*9000)
+
+db.collection("orders").doc(currentOrder).update({
+
+deliveryOTP:otp,
+status:"Out for Delivery"
+
+})
+
+alert("Delivery OTP Generated: "+otp)
+
+}
+
+
+
+/* VERIFY OTP */
+
+function verifyOTP(){
+
+let entered=document.getElementById("otpVerify").value
+
+db.collection("orders").doc(currentOrder).get().then(doc=>{
+
+let data=doc.data()
+
+if(data.deliveryOTP==entered){
+
+alert("OTP Verified")
+
+db.collection("orders").doc(currentOrder).update({
+
+status:"Delivered"
+
+})
+
+}else{
+
+alert("Wrong OTP")
+
+}
+
+})
 
 }
 
