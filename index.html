@@ -3,112 +3,91 @@
 <head>
 
 <meta charset="UTF-8">
-<title>My Orders</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<script src="firebase.js"></script>
+<title>Madani Dates Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <style>
 
+{
+box-sizing:border-box;
+}
+
 body{
 margin:0;
-font-family:Segoe UI;
-background:#f4f6f8
+font-family:'Segoe UI',sans-serif;
+background:#f4f6f8;
 }
+
+/ HEADER /
 
 header{
-background:#0f9d58;
+background:linear-gradient(135deg,#0f9d58,#06341a);
 color:white;
 padding:20px;
-font-size:20px
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 4px 15px rgba(0,0,0,0.15);
 }
 
-.container{
-max-width:900px;
-margin:auto;
-padding:25px
+header h1{
+margin:0;
+font-size:20px;
 }
 
-.order{
+.copy-btn{
 background:white;
-padding:20px;
-border-radius:20px;
-margin-bottom:20px;
-box-shadow:0 10px 25px rgba(0,0,0,0.08);
-cursor:pointer
-}
-
-.status{
-font-weight:bold;
-margin-bottom:5px
-}
-
-.time{
 color:#0f9d58;
-font-weight:bold;
-margin-top:8px
-}
-
-.track{
-height:8px;
-background:#ddd;
-border-radius:10px;
-margin-top:15px;
-position:relative
-}
-
-.progress{
-height:100%;
-background:#0f9d58;
-border-radius:10px;
-transition:width 1s
-}
-
-.truck{
-position:absolute;
-top:-18px;
-font-size:22px;
-transition:left 1s
-}
-
-.otp{
-background:#fff3cd;
-padding:12px;
-border-radius:10px;
-margin-top:12px;
-font-weight:bold;
-text-align:center
-}
-
-.modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.6);
-display:none;
-justify-content:center;
-align-items:center
-}
-
-.box{
-background:white;
-padding:25px;
-border-radius:20px;
-width:320px
-}
-
-button{
-padding:10px;
 border:none;
+padding:10px 15px;
 border-radius:8px;
 cursor:pointer;
-margin-top:10px;
-width:100%;
-background:black;
-color:white
+font-weight:bold;
+}
+
+/ GRID /
+
+.container{
+padding:30px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:25px;
+}
+
+/ CARD /
+
+.card{
+background:white;
+padding:30px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+cursor:pointer;
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 15px 35px rgba(0,0,0,0.2);
+}
+
+.icon{
+font-size:40px;
+margin-bottom:10px;
+}
+
+.title{
+font-size:16px;
+font-weight:bold;
+}
+
+/ FOOTER */
+
+footer{
+text-align:center;
+padding:20px;
+font-size:13px;
+opacity:0.6;
 }
 
 </style>
@@ -117,147 +96,54 @@ color:white
 
 <body>
 
-<header>My Orders</header>
+<header>
 
-<div class="container" id="orders"></div>
+<h1>Madani Dates Admin</h1>
 
-<div class="modal" id="popup">
-<div class="box" id="details"></div>
-</div>
+<button class="copy-btn" onclick="copyCode()">
+Copy Full Code
+</button>
 
-<script>
+</header>
 
-const auth=firebase.auth();
-const db=firebase.firestore();
 
-auth.onAuthStateChanged(user=>{
+<div class="container">
 
-if(!user){
-window.location="login.html";
-return;
-}
+<div class="card" onclick="location.href='orders.html'">
 
-db.collection("orders")
-.where("userEmail","==",user.email)
-.onSnapshot(snapshot=>{
+<div class="icon">📦</div>
 
-let html="";
-
-snapshot.forEach(doc=>{
-
-let o=doc.data();
-
-let percent=10;
-
-if(o.status=="Packed") percent=40;
-if(o.status=="Out for Delivery") percent=75;
-if(o.status=="Delivered") percent=100;
-
-let otpBox="";
-let timeBox="";
-
-if(o.deliveryTime){
-
-timeBox=`
-<div class="time">
-Delivery Time: ${o.deliveryTime}
-</div>
-`;
-
-}
-
-if(o.status=="Out for Delivery" && o.deliveryOTP){
-
-otpBox=`
-
-<div class="otp">
-
-Delivery OTP: ${o.deliveryOTP}
-
-<br>
-
-Show this OTP to delivery boy
+<div class="title">Orders</div>
 
 </div>
 
-`;
 
-}
+<div class="card" onclick="location.href='stock.html'">
 
-html+=`
+<div class="icon">📊</div>
 
-<div class="order" onclick="showDetails('${doc.id}')">
-
-<div class="status">Status: ${o.status}</div>
-
-Total: ₹${o.total}
-
-${timeBox}
-
-${otpBox}
-
-<div class="track">
-
-<div class="progress" style="width:${percent}%"></div>
-
-<div class="truck" style="left:${percent}%">🚚</div>
+<div class="title">Stock Control</div>
 
 </div>
 
+
+<div class="card" onclick="location.href='add-item.html'">
+
+<div class="icon">➕</div>
+
+<div class="title">Add Product</div>
+
 </div>
 
-`;
 
-});
+<div class="card" onclick="location.href='messages.html'">
 
-document.getElementById("orders").innerHTML=html;
+<div class="icon">💬</div>
 
-});
+<div class="title">Messages</div>
 
-});
+</div>
 
-function showDetails(id){
-
-db.collection("orders").doc(id).get().then(doc=>{
-
-let o=doc.data();
-
-let items=o.items.map(i=>i.name+" x"+i.qty).join("<br>");
-
-document.getElementById("details").innerHTML=`
-
-<h3>Order Details</h3>
-
-${items}
-
-<br><br>
-
-<b>Name:</b> ${o.customer.name}<br>
-<b>Phone:</b> ${o.customer.phone}<br>
-<b>Address:</b> ${o.customer.address}<br>
-
-<br>
-
-<b>Total:</b> ₹${o.total}<br>
-<b>Status:</b> ${o.status}
-
-<br><br>
-
-<button onclick="closePopup()">Close</button>
-
-`;
-
-document.getElementById("popup").style.display="flex";
-
-});
-
-}
-
-function closePopup(){
-document.getElementById("popup").style.display="none";
-}
-
-</script>
 
 </body>
 </html>
