@@ -2,76 +2,262 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Madani Dates Admin</title>
+<meta charset="UTF-8">
+<title>My Orders</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
 
 <style>
 
 body{
 margin:0;
-font-family:Arial;
-background:#f4f6f8;
+font-family:Segoe UI;
+background:#f4f6f8
 }
 
 header{
-background:black;
+background:#0f9d58;
 color:white;
-padding:18px;
-text-align:center;
-font-size:20px;
+padding:20px;
+font-size:20px
 }
 
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-gap:20px;
-padding:30px;
+.container{
+max-width:900px;
+margin:auto;
+padding:25px
 }
 
-.card{
+.order{
 background:white;
-padding:30px;
-border-radius:15px;
-text-align:center;
-box-shadow:0 6px 20px rgba(0,0,0,0.1);
-cursor:pointer;
-font-size:18px;
-transition:0.2s;
+padding:20px;
+border-radius:20px;
+margin-bottom:20px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+cursor:pointer
 }
 
-.card:hover{
-transform:scale(1.05);
+.status{
+font-weight:bold;
+margin-bottom:5px
+}
+
+.time{
+color:#0f9d58;
+font-weight:bold;
+margin-top:8px
+}
+
+.track{
+height:8px;
+background:#ddd;
+border-radius:10px;
+margin-top:15px;
+position:relative
+}
+
+.progress{
+height:100%;
+background:#0f9d58;
+border-radius:10px;
+transition:width 1s
+}
+
+.truck{
+position:absolute;
+top:-18px;
+font-size:22px;
+transition:left 1s
+}
+
+.otp{
+background:#fff3cd;
+padding:12px;
+border-radius:10px;
+margin-top:12px;
+font-weight:bold;
+text-align:center
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center
+}
+
+.box{
+background:white;
+padding:25px;
+border-radius:20px;
+width:320px
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:10px;
+width:100%;
+background:black;
+color:white
 }
 
 </style>
+
 </head>
 
 <body>
 
-<header>Madani Dates Admin</header>
+<header>My Orders</header>
 
-<div class="grid">
+<div class="container" id="orders"></div>
 
-<div class="card" onclick="location.href='orders.html'">
-📦 Orders
+<div class="modal" id="popup">
+<div class="box" id="details"></div>
 </div>
 
-<div class="card" onclick="location.href='stock.html'">
-📊 Stock
+<script>
+
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+auth.onAuthStateChanged(user=>{
+
+if(!user){
+window.location="login.html";
+return;
+}
+
+db.collection("orders")
+.where("userEmail","==",user.email)
+.onSnapshot(snapshot=>{
+
+let html="";
+
+snapshot.forEach(doc=>{
+
+let o=doc.data();
+
+let percent=10;
+
+if(o.status=="Packed") percent=40;
+if(o.status=="Out for Delivery") percent=75;
+if(o.status=="Delivered") percent=100;
+
+let otpBox="";
+let timeBox="";
+
+if(o.deliveryTime){
+
+timeBox=`
+<div class="time">
+Delivery Time: ${o.deliveryTime}
+</div>
+`;
+
+}
+
+if(o.status=="Out for Delivery" && o.deliveryOTP){
+
+otpBox=`
+
+<div class="otp">
+
+Delivery OTP: ${o.deliveryOTP}
+
+<br>
+
+Show this OTP to delivery boy
+
 </div>
 
-<div class="card" onclick="location.href='add-item.html'">
-➕ Add Product
+`;
+
+}
+
+html+=`
+
+<div class="order" onclick="showDetails('${doc.id}')">
+
+<div class="status">Status: ${o.status}</div>
+
+Total: ₹${o.total}
+
+${timeBox}
+
+${otpBox}
+
+<div class="track">
+
+<div class="progress" style="width:${percent}%"></div>
+
+<div class="truck" style="left:${percent}%">🚚</div>
+
 </div>
 
-<div class="card" onclick="location.href='messages.html'">
-💬 Messages
 </div>
 
-</div>
+`;
+
+});
+
+document.getElementById("orders").innerHTML=html;
+
+});
+
+});
+
+function showDetails(id){
+
+db.collection("orders").doc(id).get().then(doc=>{
+
+let o=doc.data();
+
+let items=o.items.map(i=>i.name+" x"+i.qty).join("<br>");
+
+document.getElementById("details").innerHTML=`
+
+<h3>Order Details</h3>
+
+${items}
+
+<br><br>
+
+<b>Name:</b> ${o.customer.name}<br>
+<b>Phone:</b> ${o.customer.phone}<br>
+<b>Address:</b> ${o.customer.address}<br>
+
+<br>
+
+<b>Total:</b> ₹${o.total}<br>
+<b>Status:</b> ${o.status}
+
+<br><br>
+
+<button onclick="closePopup()">Close</button>
+
+`;
+
+document.getElementById("popup").style.display="flex";
+
+});
+
+}
+
+function closePopup(){
+document.getElementById("popup").style.display="none";
+}
+
+</script>
 
 </body>
 </html>
-
-
-
